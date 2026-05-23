@@ -272,14 +272,19 @@
   );
 
   // 右ボタン押下中のホイールでタブ移動
+  // rightDown は mousedown→mouseup の間しか true にならないため、
+  // タブ切替後の新タブでは false になっている。実際の押下状態は
+  // WheelEvent.buttons のビット2で判定できるので、これで連続切替を可能にする。
   window.addEventListener(
     "wheel",
     (e) => {
-      if (!rightDown || !settings.wheelTab) return;
+      if (!settings.wheelTab) return;
+      const heldRight = rightDown || (e.buttons & 2) !== 0;
+      if (!heldRight) return;
       e.preventDefault();
       e.stopPropagation();
       wheelUsed = true;
-      suppressMenu = true;
+      suppressMenu = true; // 後で右ボタンを離したときのメニューを抑制
       const action = e.deltaY > 0 ? "nextTab" : "prevTab";
       try {
         chrome.runtime.sendMessage({ type: "action", action, loop: settings.wheelTabLoop });
